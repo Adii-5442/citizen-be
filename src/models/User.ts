@@ -14,6 +14,13 @@ export interface IUser extends Document {
       longitude: number;
     };
   };
+  bio: string;
+  profileImage: string;
+  followers: mongoose.Types.ObjectId[];
+  following: mongoose.Types.ObjectId[];
+  achievements: mongoose.Types.ObjectId[];
+  notifications: mongoose.Types.ObjectId[];
+  recentActivity: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -58,6 +65,37 @@ const userSchema = new Schema<IUser>(
         longitude: Number,
       },
     },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+      default: '',
+    },
+    profileImage: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    followers: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    }],
+    following: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    }],
+    achievements: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Achievement',
+    }],
+    notifications: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Notification',
+    }],
+    recentActivity: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Activity',
+    }],
   },
   {
     timestamps: true,

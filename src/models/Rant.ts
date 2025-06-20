@@ -13,11 +13,13 @@ export interface IRant extends Document {
   };
   upvotes: number;
   upvotedBy: mongoose.Types.ObjectId[];
-  comments: {
-    text: string;
-    author: mongoose.Types.ObjectId;
-    createdAt: Date;
-  }[];
+  title: string;
+  description: string;
+  images: string[];
+  category: string;
+  isAnonymous: boolean;
+  petition: mongoose.Types.ObjectId;
+  trending: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,22 +59,39 @@ const rantSchema = new Schema<IRant>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     }],
-    comments: [{
-      text: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      author: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now,
-      },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 1000,
+    },
+    images: [{
+      type: String,
+      trim: true,
     }],
+    category: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    isAnonymous: {
+      type: Boolean,
+      default: false,
+    },
+    petition: {
+      type: Schema.Types.ObjectId,
+      ref: 'Petition',
+    },
+    trending: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

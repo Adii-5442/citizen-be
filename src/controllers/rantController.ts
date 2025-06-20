@@ -155,32 +155,21 @@ export const upvoteRant = async (req: AuthRequest, res: Response) => {
 };
 
 export const addComment = async (req: AuthRequest, res: Response) => {
-  try {
-    const rant = await Rant.findById(req.params.id);
-    if (!rant) {
-      return res.status(404).json({ error: 'Rant not found' });
-    }
+  // TODO: Implement add comment logic
+  res.status(501).json({ message: 'Not implemented' });
+};
 
-    rant.comments.push({
-      text: req.body.text,
-      author: req.user._id,
-      createdAt: new Date(),
-    });
+export const getComments = async (req: AuthRequest, res: Response) => {
+  // TODO: Implement get comments logic
+  res.status(501).json({ message: 'Not implemented' });
+};
 
-    await rant.save();
+export const getTrendingRants = async (req: AuthRequest, res: Response) => {
+  // TODO: Implement trending rants logic
+  res.status(501).json({ message: 'Not implemented' });
+};
 
-    // Add points to user
-    const user = await User.findById(req.user._id);
-    if (user) {
-      user.points += 5;
-      if (user.points >= user.level * 100) {
-        user.level += 1;
-      }
-      await user.save();
-    }
-
-    res.json(rant);
-  } catch (error) {
-    res.status(400).json({ error: 'Error adding comment' });
-  }
+export const getPetitionStatus = async (req: AuthRequest, res: Response) => {
+  // TODO: Implement petition status logic
+  res.status(501).json({ message: 'Not implemented' });
 }; 

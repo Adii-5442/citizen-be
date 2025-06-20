@@ -1,111 +1,75 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import { generateToken } from '../middleware/auth';
+import Activity from '../models/Activity';
+import Notification from '../models/Notification';
 
-export const register = async (req: Request, res: Response) => {
+export const followUser = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+    const userId = req.user?._id || req.body.userId; // Auth middleware should set req.user
+    const targetId = req.params.id;
+    if (userId === targetId) {
+      return res.status(400).json({ error: 'Cannot follow yourself' });
     }
-
-    // Create new user
-    const user = new User({
-      username,
-      email,
-      password,
-    });
-
-    await user.save();
-    const token = generateToken(user._id);
-
-    res.status(201).json({
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        level: user.level,
-        points: user.points,
-      },
-      token,
-    });
-  } catch (error) {
-    res.status(400).json({ error: 'Error creating user' });
-  }
-};
-
-export const login = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const token = generateToken(user._id);
-
-    res.json({
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        level: user.level,
-        points: user.points,
-      },
-      token,
-    });
-  } catch (error) {
-    res.status(400).json({ error: 'Error logging in' });
-  }
-};
-
-export const getProfile = async (req: Request, res: Response) => {
-  try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (!user) {
+    const user = await User.findById(userId);
+    const target = await User.findById(targetId);
+    if (!user || !target) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json(user);
+    if (target.followers.includes(user._id)) {
+      return res.status(400).json({ error: 'Already following' });
+    }
+    target.followers.push(user._id);
+    user.following.push(target._id);
+    await target.save();
+    await user.save();
+    // Create activity for follower
+    await Activity.create({
+      user: user._id,
+      type: 'follow',
+      message: `You followed ${target.username}`,
+      relatedUser: target._id,
+    });
+    // Create notification for followed user
+    await Notification.create({
+      user: target._id,
+      type: 'follow',
+      message: `${user.username} started following you`,
+      relatedUser: user._id,
+    });
+    res.json({ message: 'Followed successfully' });
   } catch (error) {
-    res.status(400).json({ error: 'Error fetching profile' });
+    res.status(500).json({ error: 'Error following user' });
   }
 };
 
-export const updateProfile = async (req: Request, res: Response) => {
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ['username', 'email', 'location'] as const;
-  type AllowedUpdate = typeof allowedUpdates[number];
-  const isValidOperation = updates.every(update => allowedUpdates.includes(update as AllowedUpdate));
-
-  if (!isValidOperation) {
-    return res.status(400).json({ error: 'Invalid updates' });
-  }
-
+export const unfollowUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
+    const userId = req.user?._id || req.body.userId;
+    const targetId = req.params.id;
+    if (userId === targetId) {
+      return res.status(400).json({ error: 'Cannot unfollow yourself' });
+    }
+    const user = await User.findById(userId);
+    const target = await User.findById(targetId);
+    if (!user || !target) {
       return res.status(404).json({ error: 'User not found' });
     }
-
-    updates.forEach(update => {
-      const key = update as AllowedUpdate;
-      (user as any)[key] = req.body[key];
-    });
-
+    if (!target.followers.includes(user._id)) {
+      return res.status(400).json({ error: 'Not following' });
+    }
+    target.followers = target.followers.filter(f => !f.equals(user._id));
+    user.following = user.following.filter(f => !f.equals(target._id));
+    await target.save();
     await user.save();
-    res.json(user);
+    // Create activity for unfollow
+    await Activity.create({
+      user: user._id,
+      type: 'follow',
+      message: `You unfollowed ${target.username}`,
+      relatedUser: target._id,
+    });
+    res.json({ message: 'Unfollowed successfully' });
   } catch (error) {
-    res.status(400).json({ error: 'Error updating profile' });
+    res.status(500).json({ error: 'Error unfollowing user' });
   }
 }; 

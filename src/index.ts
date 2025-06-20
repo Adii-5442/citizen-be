@@ -2,8 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/database';
-import userRoutes from './routes/userRoutes';
-import rantRoutes from './routes/rantRoutes';
+import apiRouter from './routes';
 
 dotenv.config();
 
@@ -17,8 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/users', userRoutes);
-app.use('/api/rants', rantRoutes);
+app.use('/api', apiRouter);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
