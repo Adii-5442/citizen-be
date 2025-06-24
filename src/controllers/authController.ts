@@ -11,6 +11,7 @@ export const register = async (req: Request, res: Response) => {
     }
     const user = new User({ username, email, password });
     await user.save();
+    console.log(`\x1b[42m\x1b[30m✔ USER CREATED:\x1b[0m \x1b[32m${username}\x1b[0m`);
     const token = generateToken(user._id);
     res.status(201).json({
       user: {
