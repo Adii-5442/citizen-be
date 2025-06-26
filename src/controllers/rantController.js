@@ -1,9 +1,7 @@
-import { Response } from 'express';
-import Rant from '../models/Rant';
-import User from '../models/User';
-import { AuthRequest } from '../types';
+import Rant from '../models/Rant.js';
+import User from '../models/User.js';
 
-export const createRant = async (req: AuthRequest, res: Response) => {
+export const createRant = async (req, res) => {
   try {
     const rant = new Rant({
       ...req.body,
@@ -28,17 +26,17 @@ export const createRant = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getRants = async (req: AuthRequest, res: Response) => {
+export const getRants = async (req, res) => {
   try {
     const { sort = 'recent', city, page = 1, limit = 10 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
-    let query: any = {};
+    let query = {};
     if (city) {
       query['location.city'] = city;
     }
 
-    let sortOptions: any = {};
+    let sortOptions = {};
     if (sort === 'trending') {
       sortOptions = { upvotes: -1 };
     } else {
@@ -64,7 +62,7 @@ export const getRants = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getRantById = async (req: AuthRequest, res: Response) => {
+export const getRantById = async (req, res) => {
   try {
     const rant = await Rant.findById(req.params.id)
       .populate('author', 'username level')
@@ -80,11 +78,10 @@ export const getRantById = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const updateRant = async (req: AuthRequest, res: Response) => {
+export const updateRant = async (req, res) => {
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['text', 'imageUrl'] as const;
-  type AllowedUpdate = typeof allowedUpdates[number];
-  const isValidOperation = updates.every(update => allowedUpdates.includes(update as AllowedUpdate));
+  const allowedUpdates = ['text', 'imageUrl'];
+  const isValidOperation = updates.every(update => allowedUpdates.includes(update));
 
   if (!isValidOperation) {
     return res.status(400).json({ error: 'Invalid updates' });
@@ -101,8 +98,7 @@ export const updateRant = async (req: AuthRequest, res: Response) => {
     }
 
     updates.forEach(update => {
-      const key = update as AllowedUpdate;
-      (rant as any)[key] = req.body[key];
+      rant[update] = req.body[update];
     });
 
     await rant.save();
@@ -112,7 +108,7 @@ export const updateRant = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const deleteRant = async (req: AuthRequest, res: Response) => {
+export const deleteRant = async (req, res) => {
   try {
     const rant = await Rant.findOneAndDelete({
       _id: req.params.id,
@@ -129,7 +125,7 @@ export const deleteRant = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const upvoteRant = async (req: AuthRequest, res: Response) => {
+export const upvoteRant = async (req, res) => {
   try {
     const rant = await Rant.findById(req.params.id);
     if (!rant) {
@@ -154,7 +150,7 @@ export const upvoteRant = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const addComment = async (req: AuthRequest, res: Response) => {
+export const addComment = async (req, res) => {
   try {
     const rant = await Rant.findById(req.params.id);
     if (!rant) {

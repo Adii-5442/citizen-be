@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './config/database';
-import userRoutes from './routes/userRoutes';
-import rantRoutes from './routes/rantRoutes';
+import connectDB from './config/database.js';
+import userRoutes from './routes/userRoutes.js';
+import rantRoutes from './routes/rantRoutes.js';
 
 dotenv.config();
 
@@ -21,7 +21,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/rants', rantRoutes);
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });

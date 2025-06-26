@@ -1,8 +1,7 @@
-import { Request, Response } from 'express';
-import User from '../models/User';
-import { generateToken } from '../middleware/auth';
+import User from '../models/User.js';
+import { generateToken } from '../middleware/auth.js';
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -37,7 +36,7 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -70,7 +69,7 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const getProfile = async (req: Request, res: Response) => {
+export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
@@ -82,11 +81,10 @@ export const getProfile = async (req: Request, res: Response) => {
   }
 };
 
-export const updateProfile = async (req: Request, res: Response) => {
+export const updateProfile = async (req, res) => {
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['username', 'email', 'location'] as const;
-  type AllowedUpdate = typeof allowedUpdates[number];
-  const isValidOperation = updates.every(update => allowedUpdates.includes(update as AllowedUpdate));
+  const allowedUpdates = ['username', 'email', 'location'];
+  const isValidOperation = updates.every(update => allowedUpdates.includes(update));
 
   if (!isValidOperation) {
     return res.status(400).json({ error: 'Invalid updates' });
@@ -99,8 +97,7 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     updates.forEach(update => {
-      const key = update as AllowedUpdate;
-      (user as any)[key] = req.body[key];
+      user[update] = req.body[update];
     });
 
     await user.save();
