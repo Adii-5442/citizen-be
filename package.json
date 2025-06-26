@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest"
+    "test": "jest",
+    "build": "rm -rf build && cp -r src build"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
