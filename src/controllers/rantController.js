@@ -10,15 +10,17 @@ export const createRant = async (req, res) => {
 
     await rant.save();
 
-    // Add points to user
+    // Add points to user using the new method
     const user = await User.findById(req.user._id);
     if (user) {
-      user.points += 10;
-      if (user.points >= user.level * 100) {
-        user.level += 1;
-      }
+      await user.addPoints(10);
+      // Update total rants count
+      user.totalRants += 1;
       await user.save();
     }
+
+    // Populate author with enhanced user data
+    await rant.populate('author', 'username level firstName lastName displayName avatar totalRants totalUpvotes totalComments reputation');
 
     res.status(201).json(rant);
   } catch (error) {
@@ -47,8 +49,8 @@ export const getRants = async (req, res) => {
       .sort(sortOptions)
       .skip(skip)
       .limit(Number(limit))
-      .populate('author', 'username level')
-      .populate('comments.author', 'username');
+      .populate('author', 'username level firstName lastName displayName avatar totalRants totalUpvotes totalComments reputation')
+      .populate('comments.author', 'username firstName lastName displayName avatar');
 
     const total = await Rant.countDocuments(query);
 
@@ -65,8 +67,8 @@ export const getRants = async (req, res) => {
 export const getRantById = async (req, res) => {
   try {
     const rant = await Rant.findById(req.params.id)
-      .populate('author', 'username level')
-      .populate('comments.author', 'username');
+      .populate('author', 'username level firstName lastName displayName avatar totalRants totalUpvotes totalComments reputation')
+      .populate('comments.author', 'username firstName lastName displayName avatar');
 
     if (!rant) {
       return res.status(404).json({ error: 'Rant not found' });
@@ -102,6 +104,10 @@ export const updateRant = async (req, res) => {
     });
 
     await rant.save();
+    
+    // Populate author with enhanced user data
+    await rant.populate('author', 'username level firstName lastName displayName avatar totalRants totalUpvotes totalComments reputation');
+    
     res.json(rant);
   } catch (error) {
     res.status(400).json({ error: 'Error updating rant' });
@@ -117,6 +123,13 @@ export const deleteRant = async (req, res) => {
 
     if (!rant) {
       return res.status(404).json({ error: 'Rant not found' });
+    }
+
+    // Update user's total rants count
+    const user = await User.findById(req.user._id);
+    if (user && user.totalRants > 0) {
+      user.totalRants -= 1;
+      await user.save();
     }
 
     res.json(rant);
@@ -141,9 +154,21 @@ export const upvoteRant = async (req, res) => {
     } else {
       rant.upvotes += 1;
       rant.upvotedBy.push(req.user._id);
+      
+      // Add points to rant author for upvote
+      const rantAuthor = await User.findById(rant.author);
+      if (rantAuthor) {
+        await rantAuthor.addPoints(1);
+        rantAuthor.totalUpvotes += 1;
+        await rantAuthor.save();
+      }
     }
 
     await rant.save();
+    
+    // Populate author with enhanced user data
+    await rant.populate('author', 'username level firstName lastName displayName avatar totalRants totalUpvotes totalComments reputation');
+    
     res.json(rant);
   } catch (error) {
     res.status(400).json({ error: 'Error upvoting rant' });
@@ -165,15 +190,17 @@ export const addComment = async (req, res) => {
 
     await rant.save();
 
-    // Add points to user
+    // Add points to user using the new method
     const user = await User.findById(req.user._id);
     if (user) {
-      user.points += 5;
-      if (user.points >= user.level * 100) {
-        user.level += 1;
-      }
+      await user.addPoints(5);
+      user.totalComments += 1;
       await user.save();
     }
+
+    // Populate author and comments with enhanced user data
+    await rant.populate('author', 'username level firstName lastName displayName avatar totalRants totalUpvotes totalComments reputation');
+    await rant.populate('comments.author', 'username firstName lastName displayName avatar');
 
     res.json(rant);
   } catch (error) {
