@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import rantRoutes from './routes/rantRoutes.js';
+import commentRoutes from './routes/commentRoutes.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/rants', rantRoutes);
+app.use('/api/comments', commentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
